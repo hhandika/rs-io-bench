@@ -33,20 +33,6 @@ pub fn iter_fasta_bytes(path: &Path) -> Result<()> {
     Ok(())
 }
 
-struct Recs {
-    id: String,
-    seq: String,
-}
-
-impl Recs {
-    fn new(id: &str, seq: &str) -> Self {
-        Recs {
-            id: String::from(id),
-            seq: String::from(seq),
-        }
-    }
-}
-
 struct Records {
     id: String,
     seq: String,
@@ -91,6 +77,20 @@ pub fn read_fasta_bytes(path: &Path) -> Result<()> {
         println!("{}", recs.seq);
     }
     Ok(())
+}
+
+struct Recs {
+    id: String,
+    seq: String,
+}
+
+impl Recs {
+    fn new(id: &str, seq: &str) -> Self {
+        Recs {
+            id: String::from(id),
+            seq: String::from(seq),
+        }
+    }
 }
 
 struct FastaReader<R> {
