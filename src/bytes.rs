@@ -41,14 +41,15 @@ pub fn read_fasta_bytes(path: &Path) -> Result<()> {
             Ok(_) => {
                 if let Some(id) = buffer.strip_prefix('>') {
                     if !recs.id.is_empty() {
-                        println!("{}", recs.id);
+                        println!("{}", recs.id.trim());
                         println!("{}", recs.seq);
                         recs.id.clear();
-                        recs.seq.clear();
-                    } else {
+                    }
+                    if !buffer.is_empty() {
                         recs.id = String::from(id);
                         recs.seq.clear();
                     }
+                    recs.seq.clear();
                 } else {
                     recs.seq.push_str(buffer.trim());
                 }
@@ -56,6 +57,12 @@ pub fn read_fasta_bytes(path: &Path) -> Result<()> {
             }
             Err(e) => return Err(e),
         }
+    }
+
+    // Print last read record
+    if !recs.id.is_empty() {
+        println!("{}", recs.id.trim());
+        println!("{}", recs.seq);
     }
     Ok(())
 }
