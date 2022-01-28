@@ -21,17 +21,17 @@ pub fn read_nexus_bytes(path: &Path) -> Result<()> {
     Ok(())
 }
 
-// pub fn iter_fasta_bytes(path: &Path) -> Result<()> {
-//     let file = File::open(path)?;
-//     let recs = FastaReader::new(file);
+pub fn iter_fasta_bytes(path: &Path) -> Result<()> {
+    let file = File::open(path)?;
+    let recs = FastaReader::new(file);
 
-//     recs.into_iter().for_each(|rec| {
-//         println!("{}", rec.id);
-//         println!("{}", rec.seq);
-//     });
+    recs.into_iter().for_each(|rec| {
+        println!("{}", rec.id);
+        println!("{}", rec.seq);
+    });
 
-//     Ok(())
-// }
+    Ok(())
+}
 
 struct Recs {
     id: String,
@@ -39,19 +39,27 @@ struct Recs {
 }
 
 impl Recs {
-    fn new() -> Self {
+    fn new(id: &str, seq: &str) -> Self {
         Recs {
-            id: String::new(),
-            seq: String::new(),
+            id: String::from(id),
+            seq: String::from(seq),
         }
     }
+}
+
+struct Records {
+    id: String,
+    seq: String,
 }
 
 pub fn read_fasta_bytes(path: &Path) -> Result<()> {
     let file = File::open(path)?;
     let mut reader = BufReader::new(file);
     let mut buffer = String::new();
-    let mut recs = Recs::new();
+    let mut recs = Records {
+        id: String::new(),
+        seq: String::new(),
+    };
 
     loop {
         match reader.read_line(&mut buffer) {
@@ -85,59 +93,56 @@ pub fn read_fasta_bytes(path: &Path) -> Result<()> {
     Ok(())
 }
 
-// struct FastaReader<R> {
-//     reader: BufReader<R>,
-//     buffer: String,
-// }
+struct FastaReader<R> {
+    reader: BufReader<R>,
+    id: String,
+    seq: String,
+}
 
-// impl<R: Read> FastaReader<R> {
-//     pub fn new(file: R) -> Self {
-//         Self {
-//             reader: BufReader::new(file),
-//             buffer: String::new(),
-//         }
-//     }
+impl<R: Read> FastaReader<R> {
+    fn new(file: R) -> Self {
+        Self {
+            reader: BufReader::new(file),
+            id: String::new(),
+            seq: String::new(),
+        }
+    }
 
-//     fn next_seq(&mut self) -> Option<Recs> {
-//         let mut recs = Recs::new();
-//         while let Some(Ok(line)) = self.reader.read_line(&mut self.buffer).next() {
-//             if line == 0 {
-//                 None
-//             } else {
-//                 if let Some(id) = self.buffer.strip_prefix('>') {
-//                     if !recs.id.is_empty() {
-//                         return Some(recs);
-//                         // recs.id.clear();
-//                     }
-//                     if !self.buffer.is_empty() {
-//                         recs.id = String::from(id);
-//                         recs.seq.clear();
-//                     }
-//                     recs.id.clear();
-//                     recs.seq.clear();
-//                 } else {
-//                     recs.seq.push_str(self.buffer.trim());
-//                 }
-//                 self.buffer.clear();
-//                 continue;
-//             }
-//         }
+    fn next_seq(&mut self) -> Option<Recs> {
+        while let Some(Ok(line)) = self.reader.by_ref().lines().next() {
+            if let Some(id) = line.strip_prefix('>') {
+                if self.id.is_empty() {
+                    self.id = String::from(id);
+                    self.seq.clear();
+                } else {
+                    let recs = self.get_recs(&self.id, &self.seq);
+                    self.id = String::from(id);
+                    self.seq.clear();
+                    return Some(recs);
+                }
+            } else {
+                self.seq.push_str(line.trim());
+            }
+        }
+        if !self.id.is_empty() {
+            let recs = self.get_recs(&self.id, &self.seq);
+            self.id.clear();
+            self.seq.clear();
+            Some(recs)
+        } else {
+            None
+        }
+    }
 
-//         if !recs.id.is_empty() {
-//             Some(recs)
-//         } else {
-//             None
-//         }
-//     }
-// }
-// // fn get_recs(&self, id: &str, seq: &str) -> Recs {
-// //     Recs::new(id, seq)
-// // }
+    fn get_recs(&self, id: &str, seq: &str) -> Recs {
+        Recs::new(id, seq)
+    }
+}
 
-// impl<R: Read> Iterator for FastaReader<R> {
-//     type Item = Recs;
+impl<R: Read> Iterator for FastaReader<R> {
+    type Item = Recs;
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.next_seq()
-//     }
-// }
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next_seq()
+    }
+}
