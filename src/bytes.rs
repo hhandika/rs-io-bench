@@ -43,7 +43,7 @@ pub fn read_fasta_bytes(path: &Path) -> Result<()> {
                     if !recs.id.is_empty() {
                         println!("{}", recs.id);
                         println!("{}", recs.seq);
-                        recs.id = String::from(id);
+                        recs.id.clear();
                         recs.seq.clear();
                     } else {
                         recs.id = String::from(id);
