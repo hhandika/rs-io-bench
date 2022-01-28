@@ -9,4 +9,7 @@ fn main() {
     println!("Fasta:");
     let fasta = Path::new("tests/test_files/simple.fas");
     bytes::read_fasta_bytes(fasta).unwrap();
+
+    // println!("Iterator fasta:");
+    // bytes::iter_fasta_bytes(fasta).unwrap();
 }
